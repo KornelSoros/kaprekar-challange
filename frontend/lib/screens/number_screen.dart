@@ -11,7 +11,9 @@ class NumberScreen extends StatefulWidget {
 }
 
 class _NumberScreenState extends State<NumberScreen> {
-  final numberService = NumberService(dio: Dio());
+  final numberService = NumberService(
+    dio: Dio(BaseOptions(connectTimeout: Duration(seconds: 10))),
+  );
   int? startingNumber;
 
   @override
@@ -34,10 +36,20 @@ class _NumberScreenState extends State<NumberScreen> {
 
             ElevatedButton(
               onPressed: () async {
-                int? newNumber = await numberService.generateNewNumber();
-                setState(() {
-                  startingNumber = newNumber;
-                });
+                if (!mounted) return;
+
+                try {
+                  int? newNumber = await numberService.generateNewNumber();
+                  setState(() {
+                    startingNumber = newNumber;
+                  });
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Hiba történt a hálózat elérésekor!"),
+                    ),
+                  );
+                }
               },
               child: Text("Új szám generálása"),
             ),
