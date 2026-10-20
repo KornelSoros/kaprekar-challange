@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/models/kaprekar_task.dart';
 
 import '../services/number_service.dart';
 
@@ -36,17 +37,21 @@ class _NumberScreenState extends State<NumberScreen> {
 
             ElevatedButton(
               onPressed: () async {
-                if (!mounted) return;
-
                 try {
-                  int? newNumber = await numberService.generateNewNumber();
+                  KaprekarTask? newNumber = await numberService.getKaprekarNum(
+                    id: 1,
+                  );
+                  print("A SZÁM: ${newNumber}");
+
+                  if (!context.mounted) return;
+
                   setState(() {
-                    startingNumber = newNumber;
+                    startingNumber = newNumber.startingNum;
                   });
                 } catch (e) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text("Hiba történt a hálózat elérésekor!"),
+                      content: Text("Hiba történt a hálózat elérésekor! $e"),
                     ),
                   );
                 }
