@@ -9,6 +9,9 @@ class NumberService:
     def __init__(self, session: Session):
         self.repo = NumberRepository(session)
 
+    def get_akk_kaprekar_tasks(self):
+        return self.repo.get_all_kaprekar_tasks()
+
     def get_kaprekar_task_by_id(self, id: int) -> KaprekarTask | None:
         return self.repo.kaprekar_task_by_id(id)
 

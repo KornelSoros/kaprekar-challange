@@ -1,11 +1,15 @@
-from sqlmodel import Session
-
+from sqlmodel import Session, select
+from typing import List
 from models.kaprekar_task import KaprekarTask
 
 
 class NumberRepository:
     def __init__(self, session: Session):
         self.session = session
+
+    def get_all_kaprekar_tasks(self) -> List[KaprekarTask]:
+        statement = select(KaprekarTask)
+        return self.session.exec(statement).all()
 
     def kaprekar_task_by_id(self, id: int) -> KaprekarTask | None:
         return self.session.get(KaprekarTask, id)
