@@ -1,17 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:frontend/models/kaprekar_task.dart';
+import 'package:frontend/screens/kaprekar_tasks_screeen.dart';
 
 import '../services/number_service.dart';
 
-class NumberScreen extends StatefulWidget {
-  const NumberScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<NumberScreen> createState() => _NumberScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _NumberScreenState extends State<NumberScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   final numberService = NumberService(
     dio: Dio(BaseOptions(connectTimeout: Duration(seconds: 10))),
   );
@@ -20,45 +20,69 @@ class _NumberScreenState extends State<NumberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              startingNumber == null
-                  ? "Generálj egy számot!"
-                  : startingNumber.toString(),
-              style: TextStyle(
-                color: Colors.blue,
-                fontWeight: FontWeight.bold,
-                fontSize: 30,
+      body: SafeArea(
+        child: Center(
+          child: Column(
+            children: [
+              Spacer(),
+
+              Text(
+                startingNumber == null
+                    ? "Generálj egy számot!"
+                    : startingNumber.toString(),
+                style: TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 30,
+                ),
               ),
-            ),
 
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  KaprekarTask? newNumber = await numberService.getKaprekarNum(
-                    id: 1,
-                  );
-                  print("A SZÁM: ${newNumber}");
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await numberService.addNewKaprakarNum();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          "Sikeresen új Kaprekar-feladványt generáltál!",
+                        ),
+                        showCloseIcon: true,
+                      ),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("Hiba történt a hálózat elérésekor! $e"),
+                      ),
+                    );
+                  }
+                },
+                child: Text("Új szám generálása"),
+              ),
 
-                  if (!context.mounted) return;
+              Spacer(),
 
-                  setState(() {
-                    startingNumber = newNumber.startingNum;
-                  });
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text("Hiba történt a hálózat elérésekor! $e"),
+              ElevatedButton(
+                onPressed: () async {
+                  final allKaprekarTasks = await numberService
+                      .getAllKaprekarTasks();
+
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return KaprekarTasksScreeen(
+                          allKaprekarTasks: allKaprekarTasks,
+                        );
+                      },
                     ),
                   );
-                }
-              },
-              child: Text("Új szám generálása"),
-            ),
-          ],
+                },
+                child: Text("Eddigi Kaprekar-feladványok"),
+              ),
+            ],
+          ),
         ),
       ),
     );
