@@ -43,33 +43,63 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
 
                             ElevatedButton(
                               onPressed: () {
+                                final steps =
+                                    kaprekarNumList[index].solutionSteps;
+                                List<List> finishedLines = [];
+                                bool animationFinished = false;
+
                                 showDialog(
                                   context: context,
                                   builder: (context) {
                                     return SizedBox(
                                       height: 200,
-                                      child: SimpleDialog(
-                                        children: [
-                                          Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: kaprekarNumList[index]
-                                                .solutionSteps
-                                                .map(
-                                                  (step) => AnimatedTextKit(
-                                                    animatedTexts: [
-                                                      TyperAnimatedText(
-                                                        "${step[0]} - ${step[1]} = ${step[2]}",
+                                      child: StatefulBuilder(
+                                        builder: (context, setDialogState) {
+                                          return SimpleDialog(
+                                            children: [
+                                              Column(
+                                                children: finishedLines
+                                                    .map(
+                                                      (finishedLine) => Text(
+                                                        "${finishedLine[0]} - ${finishedLine[1]} = ${finishedLine[2]}",
                                                       ),
-                                                      TyperAnimatedText(
-                                                        "AAAAAAAAAAAAAAAAAA",
-                                                      ),
-                                                    ],
+                                                    )
+                                                    .toList(),
+                                              ),
+
+                                              if (!animationFinished &&
+                                                  steps.isNotEmpty)
+                                                AnimatedTextKit(
+                                                  key: const ValueKey(
+                                                    "kaprekar_animation",
                                                   ),
-                                                )
-                                                .toList(),
-                                          ),
-                                        ],
+                                                  isRepeatingAnimation: false,
+                                                  animatedTexts: steps
+                                                      .map(
+                                                        (
+                                                          step,
+                                                        ) => TyperAnimatedText(
+                                                          "${step[0]} - ${step[1]} = ${step[2]}",
+                                                        ),
+                                                      )
+                                                      .toList(),
+                                                  onNext: (nextIndex, isLast) {
+                                                    setDialogState(() {
+                                                      finishedLines.add(
+                                                        steps[nextIndex],
+                                                      );
+                                                    });
+                                                  },
+                                                  onFinished: () {
+                                                    setDialogState(() {
+                                                      animationFinished = true;
+                                                    });
+                                                  },
+                                                  pause: Duration.zero,
+                                                ),
+                                            ],
+                                          );
+                                        },
                                       ),
                                     );
                                   },
