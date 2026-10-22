@@ -69,33 +69,37 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
 
                                               if (!animationFinished &&
                                                   steps.isNotEmpty)
-                                                AnimatedTextKit(
-                                                  key: const ValueKey(
-                                                    "kaprekar_animation",
+                                                Center(
+                                                  child: AnimatedTextKit(
+                                                    key: const ValueKey(
+                                                      "kaprekar_animation",
+                                                    ),
+                                                    isRepeatingAnimation: false,
+                                                    animatedTexts: steps
+                                                        .map(
+                                                          (
+                                                            step,
+                                                          ) => TyperAnimatedText(
+                                                            "${step[0]} - ${step[1]} = ${step[2]}",
+                                                          ),
+                                                        )
+                                                        .toList(),
+                                                    onNext:
+                                                        (nextIndex, isLast) {
+                                                          setDialogState(() {
+                                                            finishedLines.add(
+                                                              steps[nextIndex],
+                                                            );
+                                                          });
+                                                        },
+                                                    onFinished: () {
+                                                      setDialogState(() {
+                                                        animationFinished =
+                                                            true;
+                                                      });
+                                                    },
+                                                    pause: Duration.zero,
                                                   ),
-                                                  isRepeatingAnimation: false,
-                                                  animatedTexts: steps
-                                                      .map(
-                                                        (
-                                                          step,
-                                                        ) => TyperAnimatedText(
-                                                          "${step[0]} - ${step[1]} = ${step[2]}",
-                                                        ),
-                                                      )
-                                                      .toList(),
-                                                  onNext: (nextIndex, isLast) {
-                                                    setDialogState(() {
-                                                      finishedLines.add(
-                                                        steps[nextIndex],
-                                                      );
-                                                    });
-                                                  },
-                                                  onFinished: () {
-                                                    setDialogState(() {
-                                                      animationFinished = true;
-                                                    });
-                                                  },
-                                                  pause: Duration.zero,
                                                 ),
                                             ],
                                           );
