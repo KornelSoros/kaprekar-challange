@@ -4,7 +4,7 @@ from sqlmodel import SQLModel, Field
 
 
 class UserRegister(SQLModel):
-    username: str
+    username: str = Field(unique=True)
     password: str
 
 
