@@ -13,6 +13,7 @@ router = APIRouter(prefix="/number", tags=["Number"])
 def get_all_kaprekar_tasks(session: Session = Depends(get_session)):
     service = NumberService(session)
     return service.get_akk_kaprekar_tasks()
+
 @router.get("/get_random_number")
 def get_random_4_digit_number(id: int, session: Session = Depends(get_session)):
     service = NumberService(session)
