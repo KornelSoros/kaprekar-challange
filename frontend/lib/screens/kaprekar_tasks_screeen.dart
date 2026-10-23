@@ -1,6 +1,6 @@
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/models/kaprekar_task.dart';
+import 'package:frontend/widgets/solution_steps_dialog.dart';
 
 class KaprekarTasksScreeen extends StatefulWidget {
   final List<KaprekarTask> allKaprekarTasks;
@@ -36,7 +36,7 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
                           children: [
                             ElevatedButton(
                               onPressed: null,
-                              child: Text("Elkezdése"),
+                              child: Text("Elkezdés"),
                             ),
 
                             SizedBox(width: 5),
@@ -45,66 +45,13 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
                               onPressed: () {
                                 final steps =
                                     kaprekarNumList[index].solutionSteps;
-                                List<List> finishedLines = [];
-                                bool animationFinished = false;
 
                                 showDialog(
                                   context: context,
                                   builder: (context) {
                                     return SizedBox(
                                       height: 200,
-                                      child: StatefulBuilder(
-                                        builder: (context, setDialogState) {
-                                          return SimpleDialog(
-                                            children: [
-                                              Column(
-                                                children: finishedLines
-                                                    .map(
-                                                      (finishedLine) => Text(
-                                                        "${finishedLine[0]} - ${finishedLine[1]} = ${finishedLine[2]}",
-                                                      ),
-                                                    )
-                                                    .toList(),
-                                              ),
-
-                                              if (!animationFinished &&
-                                                  steps.isNotEmpty)
-                                                Center(
-                                                  child: AnimatedTextKit(
-                                                    key: const ValueKey(
-                                                      "kaprekar_animation",
-                                                    ),
-                                                    isRepeatingAnimation: false,
-                                                    animatedTexts: steps
-                                                        .map(
-                                                          (
-                                                            step,
-                                                          ) => TyperAnimatedText(
-                                                            "${step[0]} - ${step[1]} = ${step[2]}",
-                                                          ),
-                                                        )
-                                                        .toList(),
-                                                    onNext:
-                                                        (nextIndex, isLast) {
-                                                          setDialogState(() {
-                                                            finishedLines.add(
-                                                              steps[nextIndex],
-                                                            );
-                                                          });
-                                                        },
-                                                    onFinished: () {
-                                                      setDialogState(() {
-                                                        animationFinished =
-                                                            true;
-                                                      });
-                                                    },
-                                                    pause: Duration.zero,
-                                                  ),
-                                                ),
-                                            ],
-                                          );
-                                        },
-                                      ),
+                                      child: SolutionStepsDialog(steps: steps),
                                     );
                                   },
                                 );
