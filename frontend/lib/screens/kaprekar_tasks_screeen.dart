@@ -63,7 +63,6 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
                       ],
                     ),
                   );
-                  // Text(kaprekarNumList[index].startingNum.toString());
                 },
                 itemCount: kaprekarNumList.length,
               ),

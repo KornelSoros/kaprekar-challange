@@ -68,6 +68,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   final allKaprekarTasks = await numberService
                       .getAllKaprekarTasks();
 
+                  if (!context.mounted) return;
+
                   Navigator.push(
                     context,
                     MaterialPageRoute(
