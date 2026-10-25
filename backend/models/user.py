@@ -11,3 +11,7 @@ class UserRegister(SQLModel):
 class User(UserRegister, table = True):
     __tablename__ = "users"
     id: int = Field(default=None, primary_key=True)
+
+class UserPublic(SQLModel):
+    id: int
+    username: str
