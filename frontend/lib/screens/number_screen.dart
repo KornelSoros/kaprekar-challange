@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:frontend/screens/kaprekar_tasks_screeen.dart';
 
+import '../constants.dart';
 import '../services/number_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -20,12 +21,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> initAcessToken() async {
     final storage = FlutterSecureStorage();
     accessToken = await storage.read(key: 'access_token') ?? "";
-    print("EZ A TOKEN: $accessToken!");
     numberService = NumberService(
       dio: Dio(
         BaseOptions(
           connectTimeout: Duration(seconds: 10),
           headers: {'Authorization': 'Bearer $accessToken'},
+          baseUrl: '$baserUrl/number',
         ),
       ),
     );

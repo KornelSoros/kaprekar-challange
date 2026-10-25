@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:frontend/constants.dart';
 import 'package:frontend/screens/number_screen.dart';
 import 'package:frontend/screens/register_screen.dart';
 import 'package:frontend/services/user_service.dart';
@@ -67,7 +68,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 ElevatedButton(
                   onPressed: () async {
-                    final service = UserService(dio: Dio());
+                    final service = UserService(
+                      dio: Dio(
+                        BaseOptions(
+                          connectTimeout: Duration(minutes: 10),
+                          baseUrl: '$baserUrl/user',
+                        ),
+                      ),
+                    );
                     final loginResponse = await service.login(
                       username: usernameController.text,
                       password: passwordController.text,

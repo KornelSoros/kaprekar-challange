@@ -12,7 +12,7 @@ class UserService {
   }) async {
     try {
       final response = await dio.post(
-        'http://192.168.0.56:9000/user/login',
+        '/login',
         options: Options(
           contentType: Headers.formUrlEncodedContentType,
           headers: {'accept': '*'},

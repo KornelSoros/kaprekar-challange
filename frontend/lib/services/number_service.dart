@@ -8,17 +8,13 @@ class NumberService {
 
   Future<void> addNewKaprakarNum() async {
     try {
-      final response = await dio.post(
-        'http://192.168.0.56:9000/number/add_random_kaprekar',
-      );
+      final response = await dio.post('/add_random_kaprekar');
     } on DioException catch (e) {}
   }
 
   Future<List<KaprekarTask>> getAllKaprekarTasks() async {
     try {
-      final response = await dio.get(
-        'http://192.168.0.56:9000/number/all_kaprekar_tasks',
-      );
+      final response = await dio.get('/all_kaprekar_tasks');
       final responseList = response.data as List;
       final kaprekarTaskList = responseList
           .map((resp) => KaprekarTask.fromMap(resp))
@@ -31,9 +27,7 @@ class NumberService {
 
   Future<KaprekarTask> getKaprekarNum({required int id}) async {
     try {
-      final response = await dio.get(
-        'http://192.168.0.56:9000/number/get_random_number?id=$id',
-      );
+      final response = await dio.get('/get_random_number?id=$id');
       return KaprekarTask.fromMap(response.data);
     } on DioException catch (e) {
       rethrow;
