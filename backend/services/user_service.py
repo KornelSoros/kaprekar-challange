@@ -60,12 +60,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     return user
 
 
-def create_access_token(data: dict, expires_delta: timedelta = None):
+def create_access_token(data: dict):
     to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
-    else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
@@ -88,8 +85,6 @@ class UserService:
         if not user:
             return False
         if not verify_password(password, user.password):
-            print(password, user.password)
-            print(verify_password(password, user.password))
             return False
         return user
 

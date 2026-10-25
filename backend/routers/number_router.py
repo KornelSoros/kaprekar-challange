@@ -5,8 +5,9 @@ from sqlmodel import Session
 
 from db.session import get_session
 from services.number_service import NumberService
+from services.user_service import get_current_user
 
-router = APIRouter(prefix="/number", tags=["Number"])
+router = APIRouter(prefix="/number", tags=["Number"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/all_kaprekar_tasks")
