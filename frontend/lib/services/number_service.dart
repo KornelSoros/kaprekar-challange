@@ -25,6 +25,19 @@ class NumberService {
     }
   }
 
+  Future<List<KaprekarTask>> getKaprekarTasksByUserId() async {
+    try {
+      final response = await dio.get('/kaprekar_tasks_by_user_id');
+      final responseList = response.data as List;
+      final kaprekarTaskList = responseList
+          .map((resp) => KaprekarTask.fromMap(resp))
+          .toList();
+      return kaprekarTaskList;
+    } on DioException catch (e) {
+      rethrow;
+    }
+  }
+
   Future<KaprekarTask> getKaprekarNum({required int id}) async {
     try {
       final response = await dio.get('/get_random_number?id=$id');

@@ -1,10 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../models/user.dart';
+
 class UserService {
   final Dio dio;
 
   const UserService({required this.dio});
+
+  Future<void> register(User user) async {
+    await dio.post("/register", data: user.toMap());
+  }
 
   Future<int?> login({
     required String username,
@@ -34,5 +40,17 @@ class UserService {
     } on DioException catch (e) {
       return e.response?.statusCode;
     }
+  }
+
+  Future<UserPublic> getCurrentUser() async {
+    final response = await dio.get('/me');
+    final responseUser = response.data;
+    return UserPublic.fromMap(responseUser);
+  }
+
+  Future<void> logout() async {
+    await dio.post('/logout');
+    final storage = FlutterSecureStorage();
+    await storage.delete(key: 'access_token');
   }
 }

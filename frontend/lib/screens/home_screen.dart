@@ -1,7 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:frontend/models/user.dart';
 import 'package:frontend/screens/kaprekar_tasks_screeen.dart';
+import 'package:frontend/screens/login_screen.dart';
+import 'package:frontend/services/user_service.dart';
 
 import '../constants.dart';
 import '../services/number_service.dart';
@@ -16,9 +19,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   late String accessToken;
   late NumberService numberService;
+  late UserService userService;
   int? startingNumber;
+  UserPublic? currentUser;
 
-  Future<void> initAcessToken() async {
+  Future<void> initDatas() async {
     final storage = FlutterSecureStorage();
     accessToken = await storage.read(key: 'access_token') ?? "";
     numberService = NumberService(
@@ -30,17 +35,51 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
+    userService = UserService(
+      dio: Dio(
+        BaseOptions(
+          connectTimeout: Duration(seconds: 10),
+          headers: {'Authorization': 'Bearer $accessToken'},
+          baseUrl: '$baserUrl/user',
+        ),
+      ),
+    );
+
+    currentUser = await userService.getCurrentUser();
+
+    setState(() {});
   }
 
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((_) => initAcessToken());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await initDatas();
+    });
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        actions: [
+          Text(currentUser == null ? "" : currentUser!.username),
+          IconButton(
+            onPressed: () async {
+              await userService.logout();
+              if (!context.mounted) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+            icon: Icon(Icons.logout),
+          ),
+        ],
+        backgroundColor: Colors.blueGrey.shade300,
+        foregroundColor: Colors.blue.shade100,
+        automaticallyImplyLeading: false,
+      ),
       body: SafeArea(
         child: Center(
           child: Column(
@@ -87,7 +126,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ElevatedButton(
                 onPressed: () async {
                   final allKaprekarTasks = await numberService
-                      .getAllKaprekarTasks();
+                      .getKaprekarTasksByUserId();
 
                   if (!context.mounted) return;
 

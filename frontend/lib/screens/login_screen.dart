@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:frontend/constants.dart';
-import 'package:frontend/screens/number_screen.dart';
+import 'package:frontend/screens/home_screen.dart';
 import 'package:frontend/screens/register_screen.dart';
 import 'package:frontend/services/user_service.dart';
 
@@ -16,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
   int? loginStatus;
+  bool obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -56,17 +57,30 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 TextFormField(
                   controller: passwordController,
+                  obscureText: obscurePassword,
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                     labelText: "Jelszó",
+                    suffixIcon: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          obscurePassword = !obscurePassword;
+                        });
+                      },
+                      icon: Icon(
+                        obscurePassword
+                            ? Icons.visibility
+                            : Icons.visibility_off,
+                      ),
+                    ),
                   ),
                 ),
 
                 SizedBox(height: 10),
 
-                ElevatedButton(
+                ElevatedButton.icon(
                   onPressed: () async {
                     final service = UserService(
                       dio: Dio(
@@ -101,8 +115,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadiusGeometry.circular(10),
                     ),
+                    backgroundColor: Colors.greenAccent.shade100,
                   ),
-                  child: Text("Bejelentkezés"),
+                  label: Text("Bejelentkezés"),
+                  icon: Icon(Icons.login),
                 ),
 
                 Row(
@@ -117,9 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) {
-                            return RegisterScreen();
-                          },
+                          builder: (context) => RegisterScreen(),
                         ),
                       ),
                     ),
