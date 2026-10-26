@@ -13,7 +13,7 @@ router = APIRouter(prefix="/user", tags=["User"])
 
 
 @router.post("/register")
-def register_user(*, session: Session = Depends(get_session), user: UserRegister):
+def register_user(user: UserRegister, session: Session = Depends(get_session)):
     service = UserService(session)
     service.register_user(user)
 

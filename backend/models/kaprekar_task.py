@@ -7,3 +7,4 @@ class KaprekarTask(SQLModel, table = True):
     id: int = Field(default=None, primary_key=True)
     starting_num: int
     solution_steps: list[list[int]] = Field(sa_type=JSONB)
+    user_id: int = Field(foreign_key="users.id")

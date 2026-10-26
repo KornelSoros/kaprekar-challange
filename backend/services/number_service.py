@@ -12,12 +12,15 @@ class NumberService:
     def get_akk_kaprekar_tasks(self):
         return self.repo.get_all_kaprekar_tasks()
 
+    def get_akk_kaprekar_tasks_by_user_id(self, user_id: int):
+        return self.repo.get_kaprekar_tasks_by_user_id(user_id)
+
     def get_kaprekar_task_by_id(self, id: int) -> KaprekarTask | None:
         return self.repo.kaprekar_task_by_id(id)
 
-    def add_new_kaprekar(self, kaprekar_num: int):
+    def add_new_kaprekar(self, kaprekar_num: int, user_id: int):
         steps = self.calculate_kaprekar_steps(kaprekar_num)
-        self.repo.add_new_kaprekar(kaprekar_num, steps)
+        self.repo.add_new_kaprekar(kaprekar_num, steps, user_id)
 
 
     def calculate_kaprekar_steps(self, num: int, steps = None):

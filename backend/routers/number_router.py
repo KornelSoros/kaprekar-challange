@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
 from db.session import get_session
+from models.user import UserPublic
 from services.number_service import NumberService
 from services.user_service import get_current_user
 
@@ -15,14 +16,19 @@ def get_all_kaprekar_tasks(session: Session = Depends(get_session)):
     service = NumberService(session)
     return service.get_akk_kaprekar_tasks()
 
+@router.get("/kaprekar_tasks_by_user_id")
+def get_all_kaprekar_tasks(session: Session = Depends(get_session), current_user: UserPublic = Depends(get_current_user)):
+    service = NumberService(session)
+    return service.get_akk_kaprekar_tasks_by_user_id(current_user.id)
+
 @router.get("/get_random_number")
 def get_random_4_digit_number(id: int, session: Session = Depends(get_session)):
     service = NumberService(session)
     return service.get_kaprekar_task_by_id(id)
 
 @router.post("/add_random_kaprekar")
-def add_kaprekar_number(session = Depends(get_session)):
+def add_kaprekar_number(session = Depends(get_session), current_user: UserPublic = Depends(get_current_user)):
     kaprekar_num = random.randrange(1000,10000)
 
     service = NumberService(session)
-    service.add_new_kaprekar(kaprekar_num)
+    service.add_new_kaprekar(kaprekar_num, current_user.id)
