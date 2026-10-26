@@ -6,7 +6,7 @@ from pwdlib import PasswordHash
 from sqlmodel import Session
 
 from db.session import get_session
-from models.user import UserRegister, User
+from models.user import UserRegister, User, UserPublic
 from repositories.user_repository import UserRepository
 
 from pydantic import BaseModel
@@ -46,6 +46,9 @@ async def get_current_user(token: str = Depends(oauth2_scheme), session: Session
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
+        if repo.is_token_blacklisted(token):
+            raise credentials_exception
+
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username = payload.get("sub")
         if username is None:
@@ -86,6 +89,11 @@ class UserService:
         if not verify_password(password, user.password):
             return False
         return user
+
+    def logout_user(self, token: str):
+        self.repo.logout_user(token)
+
+
 
 
 

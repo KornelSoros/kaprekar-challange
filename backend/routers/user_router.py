@@ -6,7 +6,8 @@ from sqlmodel import Session
 
 from db.session import get_session
 from models.user import UserRegister, User, UserPublic
-from services.user_service import UserService, Token, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_user, create_access_token
+from services.user_service import UserService, Token, ACCESS_TOKEN_EXPIRE_MINUTES, get_current_user, \
+    create_access_token, oauth2_scheme
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -36,8 +37,14 @@ async def login_user(
     return Token(access_token=access_token, token_type="bearer")
 
 
-@router.get("/users/me/")
+@router.get("/me", response_model=UserPublic)
 async def read_users_me(
     current_user: UserPublic = Depends(get_current_user),
-) -> UserPublic:
+):
     return current_user
+
+
+@router.post("/logout")
+def logout_user(session: Session = Depends(get_session), token: str = Depends(oauth2_scheme), current_user = Depends(get_current_user)):
+    service = UserService(session)
+    service.logout_user(token)
