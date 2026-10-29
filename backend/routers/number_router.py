@@ -21,11 +21,6 @@ def get_all_kaprekar_tasks(session: Session = Depends(get_session), current_user
     service = NumberService(session)
     return service.get_akk_kaprekar_tasks_by_user_id(current_user.id)
 
-@router.get("/get_random_number")
-def get_random_4_digit_number(id: int, session: Session = Depends(get_session)):
-    service = NumberService(session)
-    return service.get_kaprekar_task_by_id(id)
-
 @router.post("/add_random_kaprekar")
 def add_kaprekar_number(session = Depends(get_session), current_user: UserPublic = Depends(get_current_user)):
     kaprekar_num = random.randrange(1000,10000)

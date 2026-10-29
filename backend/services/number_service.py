@@ -19,8 +19,7 @@ class NumberService:
         return self.repo.kaprekar_task_by_id(id)
 
     def add_new_kaprekar(self, kaprekar_num: int, user_id: int):
-        steps = self.calculate_kaprekar_steps(kaprekar_num)
-        self.repo.add_new_kaprekar(kaprekar_num, steps, user_id)
+        self.repo.add_new_kaprekar(kaprekar_num, user_id)
 
 
     def calculate_kaprekar_steps(self, num: int, steps = None):

@@ -6,5 +6,6 @@ class KaprekarTask(SQLModel, table = True):
     __tablename__ =  "kaprekar_tasks"
     id: int = Field(default=None, primary_key=True)
     starting_num: int
-    solution_steps: list[list[int]] = Field(sa_type=JSONB)
+    score: int | None = Field(default=None)
+    solution_steps: list[list[int]] | None = Field(sa_type=JSONB, default=None)
     user_id: int = Field(foreign_key="users.id")
