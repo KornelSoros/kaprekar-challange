@@ -1,12 +1,12 @@
 class KaprekarTask {
   final int id;
   final int startingNum;
-  final List solutionSteps;
+  final List? solutionSteps;
 
   const KaprekarTask({
     required this.id,
     required this.startingNum,
-    required this.solutionSteps,
+    this.solutionSteps,
   });
 
   Map<String, dynamic> toMap() {
@@ -21,7 +21,9 @@ class KaprekarTask {
     return KaprekarTask(
       id: map['id'] as int,
       startingNum: map['starting_num'] as int,
-      solutionSteps: map['solution_steps'] as List,
+      solutionSteps: map['solution_steps'] != null
+          ? map['solution_steps'] as List
+          : null,
     );
   }
 }

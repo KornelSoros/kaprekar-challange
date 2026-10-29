@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/constants.dart';
 import 'package:frontend/screens/home_screen.dart';
 import 'package:frontend/screens/register_screen.dart';
@@ -43,38 +44,46 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 SizedBox(height: 10),
 
-                TextFormField(
-                  controller: usernameController,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    labelText: "Felhasználónév",
-                  ),
-                ),
-
-                SizedBox(height: 10),
-
-                TextFormField(
-                  controller: passwordController,
-                  obscureText: obscurePassword,
-                  decoration: InputDecoration(
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    labelText: "Jelszó",
-                    suffixIcon: IconButton(
-                      onPressed: () {
-                        setState(() {
-                          obscurePassword = !obscurePassword;
-                        });
-                      },
-                      icon: Icon(
-                        obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                AutofillGroup(
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: usernameController,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          labelText: "Felhasználónév",
+                        ),
+                        autofillHints: [AutofillHints.username],
                       ),
-                    ),
+
+                      SizedBox(height: 10),
+
+                      TextFormField(
+                        controller: passwordController,
+                        obscureText: obscurePassword,
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          labelText: "Jelszó",
+                          suffixIcon: IconButton(
+                            onPressed: () {
+                              setState(() {
+                                obscurePassword = !obscurePassword;
+                              });
+                            },
+                            icon: Icon(
+                              obscurePassword
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                          ),
+                        ),
+                        autofillHints: [AutofillHints.password],
+                      ),
+                    ],
                   ),
                 ),
 
@@ -101,6 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     if (!context.mounted) return;
                     if (loginStatus == 200) {
+                      TextInput.finishAutofillContext();
+
                       Navigator.push(
                         context,
                         MaterialPageRoute(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/models/kaprekar_task.dart';
 import 'package:frontend/widgets/solution_steps_dialog.dart';
+import 'package:frontend/widgets/solve_dialog.dart';
 
 class KaprekarTasksScreeen extends StatefulWidget {
   final List<KaprekarTask> allKaprekarTasks;
@@ -35,7 +36,19 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             ElevatedButton(
-                              onPressed: null,
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) {
+                                      return SolveDialog(
+                                        startingNum:
+                                            kaprekarNumList[index].startingNum,
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
                               child: Text("Elkezdés"),
                             ),
 
@@ -46,15 +59,19 @@ class _KaprekarTasksScreeenState extends State<KaprekarTasksScreeen> {
                                 final steps =
                                     kaprekarNumList[index].solutionSteps;
 
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return SizedBox(
-                                      height: 200,
-                                      child: SolutionStepsDialog(steps: steps),
-                                    );
-                                  },
-                                );
+                                if (steps != null) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) {
+                                      return SizedBox(
+                                        height: 200,
+                                        child: SolutionStepsDialog(
+                                          steps: steps,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }
                               },
                               child: Text("Megoldás"),
                             ),
