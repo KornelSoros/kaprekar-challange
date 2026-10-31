@@ -18,9 +18,11 @@ class NumberService:
     def get_kaprekar_task_by_id(self, id: int) -> KaprekarTask | None:
         return self.repo.kaprekar_task_by_id(id)
 
+    def set_solutions_and_scores(self, kaprekar_task, submitted_steps, correct_steps, earned_score, total_score):
+        self.repo.set_solutions_and_scores(kaprekar_task, submitted_steps, correct_steps, earned_score, total_score)
+
     def add_new_kaprekar(self, kaprekar_num: int, user_id: int):
         self.repo.add_new_kaprekar(kaprekar_num, user_id)
-
 
     def calculate_kaprekar_steps(self, num: int, steps = None):
         if steps is None:
