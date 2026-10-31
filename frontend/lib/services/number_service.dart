@@ -46,4 +46,21 @@ class NumberService {
       rethrow;
     }
   }
+
+  Future<void> sendSolution({
+    required int id,
+    required List<List<int>> solutionSteps,
+  }) async {
+    print(solutionSteps);
+    try {
+      await dio.put(
+        '/send_solution?kaprekar_id=$id',
+        data: solutionSteps,
+        options: Options(contentType: Headers.jsonContentType),
+      );
+    } on DioException catch (e) {
+      print("FASTAPI HIBA: ${e.response?.data}");
+      rethrow;
+    }
+  }
 }

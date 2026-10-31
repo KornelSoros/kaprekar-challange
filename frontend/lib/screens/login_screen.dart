@@ -55,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           labelText: "Felhasználónév",
                         ),
+                        textInputAction: TextInputAction.next,
                         autofillHints: [AutofillHints.username],
                       ),
 

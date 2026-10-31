@@ -58,23 +58,22 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
   }
 
+  Future<void> logout() async {
+    await userService.logout();
+    if (!mounted) return;
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         actions: [
           Text(currentUser == null ? "" : currentUser!.username),
-          IconButton(
-            onPressed: () async {
-              await userService.logout();
-              if (!context.mounted) return;
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
-            },
-            icon: Icon(Icons.logout),
-          ),
+          IconButton(onPressed: logout, icon: Icon(Icons.logout)),
         ],
         backgroundColor: Colors.blueGrey.shade300,
         foregroundColor: Colors.blue.shade100,
@@ -125,9 +124,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               ElevatedButton(
                 onPressed: () async {
-                  final allKaprekarTasks = await numberService
-                      .getKaprekarTasksByUserId();
-
                   if (!context.mounted) return;
 
                   Navigator.push(
@@ -135,7 +131,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     MaterialPageRoute(
                       builder: (context) {
                         return KaprekarTasksScreeen(
-                          allKaprekarTasks: allKaprekarTasks,
+                          currentUser: currentUser!,
+                          logout: logout,
                         );
                       },
                     ),
