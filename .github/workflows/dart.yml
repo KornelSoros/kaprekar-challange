@@ -1,0 +1,143 @@
+name: Kaprekar Android Release
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: kaprekar-android-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Read version
+        id: version
+        shell: bash
+        run: |
+          APP_VERSION=$(sed -n 's/^version: *//p' pubspec.yaml | head -n 1)
+
+          VERSION="${APP_VERSION%%+*}"
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid pubspec version: $APP_VERSION"
+            exit 1
+          fi
+
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
+
+      - name: Restore Android signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+            > android/upload-keystore.jks
+      
+          {
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyPassword=$KEY_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "storeFile=../upload-keystore.jks"
+          } > android/key.properties
+
+      - name: Build release APK
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+          BACKEND_URL: ${{ vars.BACKEND_URL }}
+        run: |
+          flutter build apk --release \
+            --build-name="$VERSION" \
+            --build-number="$BUILD_NUMBER" \
+            --dart-define="BACKEND_URL=$BACKEND_URL"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Generate version.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+
+          data = {
+              "version": os.environ["VERSION"],
+              "build_number": int(os.environ["BUILD_NUMBER"]),
+              "download_url": (
+                  "https://storage.googleapis.com/"
+                  "kaprekar-app-updates/android/kaprekar.apk"
+              ),
+              "release_notes": "Új Kaprekar verzió érhető el.",
+              "mandatory": False
+          }
+
+          with open("version.json", "w", encoding="utf-8") as file:
+              json.dump(data, file, indent=2, ensure_ascii=False)
+          PY
+
+      - name: Upload APK to GCS
+        run: |
+          gcloud storage cp \
+            build/app/outputs/flutter-apk/app-release.apk \
+            gs://kaprekar-app-updates/android/kaprekar.apk \
+            --cache-control="no-cache,max-age=0"
+
+      - name: Upload version.json to GCS
+        run: |
+          gcloud storage cp \
+            version.json \
+            gs://kaprekar-app-updates/android/version.json \
+            --cache-control="no-cache,max-age=0"
+
+      - name: Remove signing files
+        if: always()
+        run: |
+          rm -f android/upload-keystore.jks
+          rm -f android/key.properties
