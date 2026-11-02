@@ -68,13 +68,14 @@ jobs:
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
-
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
+            > android/upload-keystore.jks
+      
           {
             echo "storePassword=$KEYSTORE_PASSWORD"
             echo "keyPassword=$KEY_PASSWORD"
             echo "keyAlias=$KEY_ALIAS"
-            echo "storeFile=upload-keystore.jks"
+            echo "storeFile=../upload-keystore.jks"
           } > android/key.properties
 
       - name: Build release APK
@@ -138,5 +139,5 @@ jobs:
       - name: Remove signing files
         if: always()
         run: |
-          rm -f android/app/upload-keystore.jks
+          rm -f android/upload-keystore.jks
           rm -f android/key.properties
