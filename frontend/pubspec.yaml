@@ -37,6 +37,8 @@ dependencies:
   dio: ^5.11.1
   animated_text_kit: ^4.3.0
   flutter_secure_storage: ^11.2.0
+  package_info_plus: ^10.2.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

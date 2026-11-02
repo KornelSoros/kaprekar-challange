@@ -6,6 +6,9 @@ import 'package:frontend/screens/home_screen.dart';
 import 'package:frontend/screens/register_screen.dart';
 import 'package:frontend/services/user_service.dart';
 
+import '../services/app_update_service.dart';
+import '../widgets/app_update_dialog.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,6 +21,28 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
   int? loginStatus;
   bool obscurePassword = true;
+
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) async => await _checkForUpdates(),
+    );
+    super.initState();
+  }
+
+  Future<void> _checkForUpdates() async {
+    try {
+      final updateService = AppUpdateService(Dio());
+
+      final update = await updateService.checkForUpdate();
+
+      if (!mounted || update == null) return;
+
+      await showAppUpdateDialog(context, update);
+    } catch (e) {
+      debugPrint('Frissítésellenőrzési hiba: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -92,6 +117,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                 ElevatedButton.icon(
                   onPressed: () async {
+                    print("EZ A BASEURL: $baserUrl/user");
+
                     final service = UserService(
                       dio: Dio(
                         BaseOptions(
