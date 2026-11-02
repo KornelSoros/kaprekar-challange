@@ -94,3 +94,87 @@ jobs:
           if base > previous_version:
               next_version = base
           else:
+              next_version = (previous_version[0], previous_version[1], previous_version[2] + 1)
+
+          version = '.'.join(map(str, next_version))
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+              out.write(f'version={version}\n')
+              out.write(f'build_number={next_build}\n')
+          print(f'Publishing {version}+{next_build}')
+          PY
+
+      - name: Restore Android signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64"
+          test -n "$KEYSTORE_PASSWORD"
+          test -n "$KEY_PASSWORD"
+          test -n "$KEY_ALIAS"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/upload-keystore.jks
+          {
+            printf 'storePassword=%s\n' "$KEYSTORE_PASSWORD"
+            printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+            printf 'keyAlias=%s\n' "$KEY_ALIAS"
+            printf 'storeFile=../upload-keystore.jks\n'
+          } > android/key.properties
+
+      - name: Build signed release APK
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$BACKEND_URL" =~ ^https://[^[:space:]]+$ ]]; then
+            echo 'BACKEND_URL Secret is missing or not an HTTPS URL.' >&2
+            exit 1
+          fi
+          flutter build apk --release \
+            --build-name="$VERSION" \
+            --build-number="$BUILD_NUMBER" \
+            --dart-define="BACKEND_URL=$BACKEND_URL"
+          test -s build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Generate version.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          data = {
+              'version': os.environ['VERSION'],
+              'build_number': int(os.environ['BUILD_NUMBER']),
+              'download_url': 'https://storage.googleapis.com/kaprekar-app-updates/android/kaprekar.apk',
+              'release_notes': 'Új Kaprekar verzió érhető el.',
+              'mandatory': False,
+          }
+          Path('version.json').write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(data, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload APK to GCS
+        run: |
+          gcloud storage cp \
+            build/app/outputs/flutter-apk/app-release.apk \
+            gs://kaprekar-app-updates/android/kaprekar.apk \
+            --cache-control='no-cache,max-age=0'
+
+      - name: Upload version.json last
+        run: |
+          gcloud storage cp \
+            version.json \
+            gs://kaprekar-app-updates/android/version.json \
+            --cache-control='no-cache,max-age=0'
+
+      - name: Remove signing files
+        if: always()
+        run: |
+          rm -f android/upload-keystore.jks android/key.properties
