@@ -1,4 +1,4 @@
-package com.example.frontend;
+package com.kaprekar.challange;
 
 import io.flutter.embedding.android.FlutterActivity;
 
