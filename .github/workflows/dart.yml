@@ -2,8 +2,7 @@ name: Kaprekar Android Release
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
     paths-ignore:
       - '.github/workflows/**'
   workflow_dispatch:
@@ -19,7 +18,6 @@ concurrency:
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: frontend
@@ -43,52 +41,6 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Read version
-        id: version
-        shell: bash
-        run: |
-          APP_VERSION=$(sed -n 's/^version: *//p' pubspec.yaml | head -n 1)
-
-          VERSION="${APP_VERSION%%+*}"
-
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid pubspec version: $APP_VERSION"
-            exit 1
-          fi
-
-          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
-
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "build_number=$BUILD_NUMBER" >> "$GITHUB_OUTPUT"
-
-      - name: Restore Android signing key
-        env:
-          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-        run: |
-          printf '%s' "$KEYSTORE_BASE64" | base64 --decode \
-            > android/upload-keystore.jks
-      
-          {
-            echo "storePassword=$KEYSTORE_PASSWORD"
-            echo "keyPassword=$KEY_PASSWORD"
-            echo "keyAlias=$KEY_ALIAS"
-            echo "storeFile=../upload-keystore.jks"
-          } > android/key.properties
-
-      - name: Build release APK
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
-          BACKEND_URL: ${{ vars.BACKEND_URL }}
-        run: |
-          flutter build apk --release \
-            --build-name="$VERSION" \
-            --build-number="$BUILD_NUMBER" \
-            --dart-define="BACKEND_URL=$BACKEND_URL"
-
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
@@ -98,46 +50,47 @@ jobs:
       - name: Setup Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v3
 
-      - name: Generate version.json
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
-          BUILD_NUMBER: ${{ steps.version.outputs.build_number }}
+      - name: Calculate next version
+        id: version
+        shell: bash
         run: |
+          set -euo pipefail
           python3 - <<'PY'
           import json
           import os
+          import re
+          import subprocess
+          from pathlib import Path
 
-          data = {
-              "version": os.environ["VERSION"],
-              "build_number": int(os.environ["BUILD_NUMBER"]),
-              "download_url": (
-                  "https://storage.googleapis.com/"
-                  "kaprekar-app-updates/android/kaprekar.apk"
-              ),
-              "release_notes": "Új Kaprekar verzió érhető el.",
-              "mandatory": False
-          }
+          pubspec = Path('pubspec.yaml').read_text(encoding='utf-8')
+          match = re.search(r'^version:\s*(\d+)\.(\d+)\.(\d+)\+(\d+)\s*$', pubspec, re.M)
+          if not match:
+              raise SystemExit('pubspec.yaml must contain version: MAJOR.MINOR.PATCH+BUILD')
+          major, minor, patch, local_build = map(int, match.groups())
 
-          with open("version.json", "w", encoding="utf-8") as file:
-              json.dump(data, file, indent=2, ensure_ascii=False)
-          PY
+          bucket_object = 'gs://kaprekar-app-updates/android/version.json'
+          exists = subprocess.run(
+              ['gcloud', 'storage', 'objects', 'describe', bucket_object],
+              capture_output=True, text=True
+          )
+          if exists.returncode == 0:
+              subprocess.run(['gcloud', 'storage', 'cp', bucket_object, 'previous-version.json'], check=True)
+              previous = json.loads(Path('previous-version.json').read_text(encoding='utf-8'))
+              previous_build = int(previous['build_number'])
+              old_version = str(previous['version'])
+              previous_version = tuple(map(int, old_version.split('.')))
+              if len(previous_version) != 3:
+                  raise SystemExit(f'Invalid published version: {old_version}')
+          else:
+              # Fail closed on permission/network errors; only proceed when object is genuinely absent.
+              stderr = (exists.stderr or '').lower()
+              if not any(s in stderr for s in ('not found', 'notfound', '404', 'no urls matched')):
+                  raise SystemExit(f'Cannot inspect published version.json: {exists.stderr}')
+              previous_build = 0
+              previous_version = (0, 0, 0)
 
-      - name: Upload APK to GCS
-        run: |
-          gcloud storage cp \
-            build/app/outputs/flutter-apk/app-release.apk \
-            gs://kaprekar-app-updates/android/kaprekar.apk \
-            --cache-control="no-cache,max-age=0"
-
-      - name: Upload version.json to GCS
-        run: |
-          gcloud storage cp \
-            version.json \
-            gs://kaprekar-app-updates/android/version.json \
-            --cache-control="no-cache,max-age=0"
-
-      - name: Remove signing files
-        if: always()
-        run: |
-          rm -f android/upload-keystore.jks
-          rm -f android/key.properties
+          next_build = max(local_build, previous_build) + 1
+          base = (major, minor, patch)
+          if base > previous_version:
+              next_version = base
+          else:
